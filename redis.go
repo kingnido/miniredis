@@ -2,7 +2,8 @@ package main
 
 import (
 	"errors"
-	"fmt"
+	"strconv"
+	"sync"
 	"time"
 )
 
@@ -20,8 +21,6 @@ func NewRedis() (*Redis, error) {
 func (r *Redis) Set(key string, value string) error {
 	k := Key(key)
 	v := NewRedisString(value)
-
-	fmt.Println(v)
 
 	return r.store.Add(k, v)
 }
@@ -50,10 +49,7 @@ func (r *Redis) Get(key string) (string, error) {
 		return "", err
 	}
 
-	fmt.Println(data)
-
-	value, ok := data.(RedisString)
-	fmt.Println(value)
+	value, ok := data.(*RedisString)
 	if !ok {
 		return "", errors.New("Invalid type")
 	}
@@ -71,8 +67,21 @@ func (r *Redis) DbSize() int {
 	return r.store.Size()
 }
 
-func (r *Redis) Incr(key string) (string, error) {
-	return "", nil
+func (r *Redis) Incr(key string) (int, error) {
+	k := Key(key)
+
+	data, err := r.store.Get(k)
+	if err != nil {
+		data = NewRedisString("0")
+		r.store.Add(k, data)
+	}
+
+	value, ok := data.(*RedisString)
+	if !ok {
+		return 0, errors.New("Invalid type")
+	}
+
+	return value.Incr()
 }
 
 func (r *Redis) ZAdd(key string, score string, member string) (int, error) {
@@ -96,12 +105,29 @@ type RedisData interface {
 
 type RedisString struct {
 	value string
+	mutex sync.Mutex
 }
 
 func NewRedisString(value string) RedisData {
 	return &RedisString{
 		value: value,
+		mutex: sync.Mutex{},
 	}
+}
+
+func (s *RedisString) Incr() (int, error) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	i, err := strconv.Atoi(s.value)
+	if err != nil {
+		return 0, err
+	}
+
+	i += 1
+	s.value = strconv.Itoa(i)
+
+	return i, nil
 }
 
 type RedisSet struct {

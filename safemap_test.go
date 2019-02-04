@@ -100,9 +100,9 @@ func TestBasic(t *testing.T) {
 		v1 := Value("value")
 		v2 := Value("value")
 
-		m.Add(key, v1)
-		m.Add(key, v2)
-		err := m.DelIf(key, v2)
+		m.Add(key, &v1)
+		m.Add(key, &v2)
+		err := m.DelIf(key, &v2)
 
 		if err != nil {
 			t.Errorf("should not return error: %v", err)
@@ -115,9 +115,9 @@ func TestBasic(t *testing.T) {
 		v1 := Value("value")
 		v2 := Value("value")
 
-		m.Add(key, v1)
-		m.Add(key, v2)
-		err := m.DelIf(key, v1)
+		m.Add(key, &v1)
+		m.Add(key, &v2)
+		err := m.DelIf(key, &v1)
 
 		if err == nil {
 			t.Errorf("should return error")
