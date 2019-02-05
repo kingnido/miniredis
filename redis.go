@@ -94,6 +94,7 @@ func (r *Redis) ZAdd(key string, score int, member string) (int, error) {
 		// empty. create new set
 		set = NewRedisSet()
 		set.Add(score, member)
+		r.store.Add(k, set)
 	} else {
 		// has something. try to cast
 		set, ok := data.(*RedisSet)

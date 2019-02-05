@@ -120,7 +120,11 @@ func (r *RedisCmd) zadd(params []string) (string, error) {
 	}
 
 	added, err := r.redis.ZAdd(params[0], i, params[2])
-	return strconv.Itoa(added), err
+	if err != nil {
+		return "", err
+	}
+
+	return strconv.Itoa(added), nil
 }
 
 func (r *RedisCmd) zcard(params []string) (string, error) {
