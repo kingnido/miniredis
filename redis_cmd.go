@@ -31,6 +31,14 @@ func (r *RedisCmd) Send(cmd string) (string, error) {
 		return r.dbsize(s[1:])
 	case "incr":
 		return r.incr(s[1:])
+	case "zadd":
+		return r.zadd(s[1:])
+	case "zcard":
+		return r.zcard(s[1:])
+	case "zrank":
+		return r.zrank(s[1:])
+	case "zrange":
+		return r.zrange(s[1:])
 	}
 
 	return "", errors.New("unknown command")
@@ -99,4 +107,67 @@ func (r *RedisCmd) incr(params []string) (string, error) {
 	}
 
 	return strconv.Itoa(i), nil
+}
+
+func (r *RedisCmd) zadd(params []string) (string, error) {
+	if len(params) != 3 {
+		return "", errors.New("invalid command")
+	}
+
+	i, err := strconv.Atoi(params[1])
+	if err != nil {
+		return "", errors.New("score is not a number")
+	}
+
+	added, err := r.redis.ZAdd(params[0], i, params[2])
+	return strconv.Itoa(added), err
+}
+
+func (r *RedisCmd) zcard(params []string) (string, error) {
+	if len(params) != 1 {
+		return "", errors.New("invalid command")
+	}
+
+	i, err := r.redis.ZCard(params[0])
+	if err != nil {
+		return "", err
+	}
+
+	return strconv.Itoa(i), err
+}
+
+func (r *RedisCmd) zrank(params []string) (string, error) {
+	if len(params) != 2 {
+		return "", errors.New("invalid command")
+	}
+
+	i, err := r.redis.ZRank(params[0], params[1])
+	if err != nil {
+		return "", err
+	}
+
+	return strconv.Itoa(i), err
+}
+
+func (r *RedisCmd) zrange(params []string) (string, error) {
+	if len(params) != 3 {
+		return "", errors.New("invalid command")
+	}
+
+	start, err := strconv.Atoi(params[1])
+	if err != nil {
+		return "", errors.New("start is not a number")
+	}
+
+	stop, err := strconv.Atoi(params[2])
+	if err != nil {
+		return "", errors.New("stop is not a number")
+	}
+
+	s, err := r.redis.ZRange(params[0], start, stop)
+	if err != nil {
+		return "", err
+	}
+
+	return strings.Join(s, "\n"), nil
 }

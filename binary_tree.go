@@ -19,25 +19,25 @@ func NewBinaryTree() *BinaryTree {
 	return &BinaryTree{}
 }
 
-func (t *BinaryTree) Add(value int) error {
+func (t *BinaryTree) Add(value BinaryTreeValue) error {
 	t.root = insert(t.root, value)
 
 	return nil
 }
 
-func (t *BinaryTree) Del(value int) error {
+func (t *BinaryTree) Del(value BinaryTreeValue) error {
 	t.root = remove(t.root, value)
 
 	return nil
 }
 
-func (t *BinaryTree) Rank(value int) (int, error) {
+func (t *BinaryTree) Rank(value BinaryTreeValue) (int, error) {
 	return rank(t.root, value)
 }
 
-func (t *BinaryTree) Range(start int, stop int) []int {
+func (t *BinaryTree) Range(start int, stop int) []BinaryTreeValue {
 	if t.root == nil {
-		return []int{}
+		return []BinaryTreeValue{}
 	}
 
 	if start < 0 {
@@ -51,11 +51,11 @@ func (t *BinaryTree) Range(start int, stop int) []int {
 	return card(t.root, weight(t.root.left), start, stop)
 }
 
-func (t *BinaryTree) Card(i int) (int, error) {
+func (t *BinaryTree) Card(i int) (BinaryTreeValue, error) {
 	l := t.Range(i, i)
 
 	if len(l) == 0 {
-		return 0, errors.New("invalid index")
+		return nil, errors.New("invalid index")
 	}
 
 	return l[0], nil
@@ -69,7 +69,7 @@ func (t *BinaryTree) Details() {
 }
 
 type node struct {
-	value  int
+	value  BinaryTreeValue
 	height int
 	weight int
 
@@ -77,7 +77,7 @@ type node struct {
 	right *node
 }
 
-func newNode(value int) *node {
+func newNode(value BinaryTreeValue) *node {
 	return &node{
 		value:  value,
 		height: 0,
@@ -87,12 +87,12 @@ func newNode(value int) *node {
 	}
 }
 
-func insert(a *node, value int) *node {
+func insert(a *node, value BinaryTreeValue) *node {
 	if a == nil {
 		return newNode(value)
 	}
 
-	if value < a.value {
+	if value.LessThan(a.value) {
 		a.left = insert(a.left, value)
 	} else {
 		a.right = insert(a.right, value)
@@ -104,12 +104,12 @@ func insert(a *node, value int) *node {
 	return rebalance(a)
 }
 
-func remove(a *node, value int) *node {
+func remove(a *node, value BinaryTreeValue) *node {
 	if a == nil {
 		return nil
 	}
 
-	if value == a.value {
+	if value.EqualTo(a.value) {
 		if a.left == nil {
 			return a.right
 		}
@@ -123,7 +123,7 @@ func remove(a *node, value int) *node {
 		a.right = remove(a.right, smallest)
 		a.value = smallest
 	} else {
-		if value < a.value {
+		if value.LessThan(a.value) {
 			a.left = remove(a.left, value)
 		} else {
 			a.right = remove(a.right, value)
@@ -136,7 +136,7 @@ func remove(a *node, value int) *node {
 	return rebalance(a)
 }
 
-func first(a *node) int {
+func first(a *node) BinaryTreeValue {
 	if a.left == nil {
 		return a.value
 	}
@@ -228,12 +228,12 @@ func rotateRightLeft(a *node) *node {
 	return a
 }
 
-func card(a *node, i int, start int, stop int) []int {
+func card(a *node, i int, start int, stop int) []BinaryTreeValue {
 	if a == nil {
-		return []int{}
+		return []BinaryTreeValue{}
 	}
 
-	l := []int{}
+	l := []BinaryTreeValue{}
 
 	if start < i && a.left != nil {
 		l = card(a.left, i-weight(a.left)+weight(a.left.left), start, stop)
@@ -250,16 +250,16 @@ func card(a *node, i int, start int, stop int) []int {
 	return l
 }
 
-func rank(a *node, value int) (int, error) {
+func rank(a *node, value BinaryTreeValue) (int, error) {
 	if a == nil {
 		return 0, errors.New("not found")
 	}
 
-	if value == a.value {
+	if value.EqualTo(a.value) {
 		return weight(a.left), nil
 	}
 
-	if value < a.value {
+	if value.LessThan(a.value) {
 		return rank(a.left, value)
 	} else {
 		r, err := rank(a.right, value)
@@ -282,9 +282,9 @@ func inOrder(a *node, d int, f func(*node, int)) {
 	inOrder(a.right, d+1, f)
 }
 
-func value(a *node) int {
+func value(a *node) BinaryTreeValue {
 	if a == nil {
-		return -9999
+		return nil
 	}
 
 	return a.value

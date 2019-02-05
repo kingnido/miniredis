@@ -10,13 +10,13 @@ type Value interface{}
 
 type SafeMap struct {
 	store map[Key]Value
-	mutex sync.Mutex
+	mutex *sync.RWMutex
 }
 
 func NewSafeMap() (*SafeMap, error) {
 	return &SafeMap{
 		store: map[Key]Value{},
-		mutex: sync.Mutex{},
+		mutex: &sync.RWMutex{},
 	}, nil
 }
 
@@ -30,8 +30,8 @@ func (m *SafeMap) Add(key Key, value Value) error {
 }
 
 func (m *SafeMap) Get(key Key) (Value, error) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
+	m.mutex.RLock()
+	defer m.mutex.RUnlock()
 
 	value, ok := m.store[key]
 	if !ok {
@@ -70,8 +70,8 @@ func (m *SafeMap) DelIf(key Key, value Value) error {
 }
 
 func (m *SafeMap) Size() int {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
+	m.mutex.RLock()
+	defer m.mutex.RUnlock()
 
 	return len(m.store)
 }

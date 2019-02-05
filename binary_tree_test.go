@@ -2,113 +2,240 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
+	"reflect"
 	"testing"
 )
 
+type Member struct {
+	Score  int
+	Member string
+}
+
+func NewMember(score int, member string) *Member {
+	return &Member{
+		Score:  score,
+		Member: member,
+	}
+}
+
+func (a *Member) LessThan(o BinaryTreeValue) bool {
+	b, ok := o.(*Member)
+	if !ok {
+		panic(fmt.Sprintf("Type mismatch. Expected *Member, got %s\n",
+			reflect.TypeOf(o)))
+	}
+
+	if a.Score == b.Score {
+		return a.Member < b.Member
+	}
+
+	return a.Score < b.Score
+}
+
+func (a *Member) EqualTo(o BinaryTreeValue) bool {
+	b, ok := o.(*Member)
+	if !ok {
+		panic(fmt.Sprintf("Type mismatch. Expected *Member, got %s\n",
+			reflect.TypeOf(o)))
+	}
+
+	return a.Score == b.Score && a.Member == b.Member
+}
+
 func TestBinaryTree(t *testing.T) {
-	t.Run("test plz", func(t *testing.T) {
+	t.Run("with empty tree, try to get 0-th element, expect error", func(t *testing.T) {
 		tree := NewBinaryTree()
 
-		for i := 0; i < 21; i++ {
-			tree.Add(i)
-		}
-
-		tree.Details()
-
-		a, b := tree.Rank(11)
-		fmt.Println(a, b)
-
-		if tree == nil {
-			t.Errorf("tree should not be nil")
+		if _, err := tree.Card(0); err == nil {
+			t.Errorf("error expected")
 		}
 	})
 
-	t.Run("test plz", func(t *testing.T) {
+	t.Run("with empty tree, try to add 1 element, expect no error", func(t *testing.T) {
 		tree := NewBinaryTree()
+		val := NewMember(0, "zero")
 
-		for _, x := range rand.Perm(21) {
-			tree.Add(x)
-		}
-
-		tree.Details()
-
-		if tree == nil {
-			t.Errorf("tree should not be nil")
+		if err := tree.Add(val); err != nil {
+			t.Errorf("error not expected: %v", err)
 		}
 	})
 
-	t.Run("test plz del", func(t *testing.T) {
+	t.Run("with empty tree, try to add and get 1 element, expect element", func(t *testing.T) {
 		tree := NewBinaryTree()
+		val := NewMember(0, "zero")
 
-		for x := 0; x < 21; x++ {
-			tree.Add(x)
+		if err := tree.Add(val); err != nil {
+			t.Errorf("error not expected: %v", err)
 		}
 
-		for x := 5; x < 11; x++ {
-			tree.Del(x)
+		got, err := tree.Card(0)
+		if err != nil {
+			t.Errorf("error not expected: %v", err)
 		}
 
-		tree.Details()
-
-		if tree == nil {
-			t.Errorf("tree should not be nil")
+		// comparing pointers: should return same thing
+		if val != got {
+			t.Errorf("expected '%p', got '%p'", val, got)
 		}
 	})
 
-	t.Run("test plz rank", func(t *testing.T) {
+	t.Run("with empty tree, try to add 15 and get 7-th element, expect 7-th element", func(t *testing.T) {
 		tree := NewBinaryTree()
+		var seventh *Member
 
-		for x := 0; x < 21; x++ {
-			tree.Add(x)
+		for x := 0; x < 15; x++ {
+			val := NewMember(x, fmt.Sprint("member", x))
+			if x == 7 {
+				seventh = val
+			}
+
+			if err := tree.Add(val); err != nil {
+				t.Errorf("error not expected: %v", err)
+			}
 		}
 
-		tree.Details()
-
-		for x := 0; x < 21; x++ {
-			r, err := tree.Rank(x)
-			fmt.Printf("value: %d, rank: %d, error: %v\n", x, r, err)
+		got, err := tree.Card(7)
+		if err != nil {
+			t.Errorf("error not expected: %v", err)
 		}
 
-		if tree == nil {
-			t.Errorf("tree should not be nil")
+		if seventh != got {
+			t.Errorf("expected '%p', got '%p'", seventh, got)
 		}
 	})
 
-	t.Run("test plz range", func(t *testing.T) {
+	t.Run("with empty tree, try to add 21 and get 9-th to 16-th element, expect elements", func(t *testing.T) {
 		tree := NewBinaryTree()
+		elems := []*Member{}
 
-		for x := 0; x < 21; x++ {
-			tree.Add(x)
+		start := 9
+		stop := 16
+		total := 21
+
+		ranges := []struct {
+			start int
+			stop  int
+		}{
+			{9, 16},
+			{9, -5},
+			{-12, 16},
+			{-12, -5},
 		}
 
-		tree.Details()
+		for x := 0; x < total; x++ {
+			val := NewMember(x, fmt.Sprint("member", x))
+			if start <= x && x <= stop {
+				elems = append(elems, val)
+			}
 
-		r := tree.Range(4, 17)
+			if err := tree.Add(val); err != nil {
+				t.Errorf("error not expected: %v", err)
+			}
+		}
 
-		fmt.Println(r)
+		for _, r := range ranges {
+			got := tree.Range(r.start, r.stop)
 
-		if tree == nil {
-			t.Errorf("tree should not be nil")
+			if len(elems) != len(got) {
+				t.Errorf("expected '%p', got '%p'", elems, got)
+			}
+
+			for i := 0; i < len(elems); i++ {
+				if elems[i] != got[i] {
+					t.Errorf("expected '%p', got '%p'", elems[i], got[i])
+				}
+			}
 		}
 	})
 
-	t.Run("test plz card", func(t *testing.T) {
+	t.Run("with empty tree, try to add 1000 and some range, expect elements", func(t *testing.T) {
 		tree := NewBinaryTree()
+		elems := []*Member{}
 
-		for x := 0; x < 21; x++ {
-			tree.Add(x)
+		start := 130
+		stop := 650
+		total := 1000
+		th := 300
+		var elem *Member
+		var next *Member
+
+		ranges := []struct {
+			start int
+			stop  int
+		}{
+			{start, stop},
+			{start, stop - total},
+			{start - total, stop},
+			{start - total, stop - total},
 		}
 
-		tree.Details()
+		// add elements
+		for x := 0; x < total; x++ {
+			val := NewMember(x, fmt.Sprint("member", x))
+			if start <= x && x <= stop {
+				elems = append(elems, val)
+			}
 
-		r, err := tree.Card(8)
+			if th == x {
+				elem = val
+			}
 
-		fmt.Println(r, err)
+			if th+1 == x {
+				next = val
+			}
 
-		if tree == nil {
-			t.Errorf("tree should not be nil")
+			if err := tree.Add(val); err != nil {
+				t.Errorf("error not expected: %v", err)
+			}
+		}
+
+		rank, err := tree.Rank(elem)
+		if err != nil {
+			t.Errorf("error not expected: %v", err)
+		}
+
+		if rank != th {
+			t.Errorf("expected '%d', got '%d'", th, rank)
+		}
+
+		val, err := tree.Card(th)
+		if err != nil {
+			t.Errorf("error not expected: %v", err)
+		}
+
+		if val != elem {
+			t.Errorf("expected '%p', got '%p'", elem, val)
+		}
+
+		// check
+		for _, r := range ranges {
+			got := tree.Range(r.start, r.stop)
+
+			if len(elems) != len(got) {
+				t.Errorf("expected '%p', got '%p'", elems, got)
+			}
+
+			for i := 0; i < len(elems); i++ {
+				if elems[i] != got[i] {
+					t.Errorf("expected '%p', got '%p'", elems[i], got[i])
+				}
+			}
+		}
+
+		tree.Del(elem)
+
+		rank, err = tree.Rank(elem)
+		if err == nil {
+			t.Errorf("error expected")
+		}
+
+		val, err = tree.Card(th)
+		if err != nil {
+			t.Errorf("error not expected: %v", err)
+		}
+
+		if val != next {
+			t.Errorf("expected '%p', got '%p'", next, val)
 		}
 	})
-
 }

@@ -84,20 +84,78 @@ func (r *Redis) Incr(key string) (int, error) {
 	return value.Incr()
 }
 
-func (r *Redis) ZAdd(key string, score string, member string) (int, error) {
-	return 0, nil
+func (r *Redis) ZAdd(key string, score int, member string) (int, error) {
+	k := Key(key)
+
+	var set *RedisSet
+
+	data, err := r.store.Get(k)
+	if err != nil {
+		// empty. create new set
+		set = NewRedisSet()
+		set.Add(score, member)
+	} else {
+		// has something. try to cast
+		set, ok := data.(*RedisSet)
+		if !ok {
+			return 0, errors.New("Invalid type")
+		}
+		// add member to set. it is in the store already
+		set.Add(score, member)
+	}
+
+	return 1, nil
 }
 
 func (r *Redis) ZCard(key string) (int, error) {
-	return 0, nil
+	k := Key(key)
+	var set *RedisSet
+
+	data, err := r.store.Get(k)
+	if err != nil {
+		return -1, errors.New("not found")
+	}
+
+	set, ok := data.(*RedisSet)
+	if !ok {
+		return 0, errors.New("Invalid type")
+	}
+
+	return set.Card(), nil
 }
 
 func (r *Redis) ZRank(key string, member string) (int, error) {
-	return 0, nil
+	k := Key(key)
+	var set *RedisSet
+
+	data, err := r.store.Get(k)
+	if err != nil {
+		return -1, errors.New("not found")
+	}
+
+	set, ok := data.(*RedisSet)
+	if !ok {
+		return 0, errors.New("Invalid type")
+	}
+
+	return set.Rank(member)
 }
 
-func (r *Redis) ZRange(key string, start string, stop string) ([]string, error) {
-	return nil, nil
+func (r *Redis) ZRange(key string, start int, stop int) ([]string, error) {
+	k := Key(key)
+	var set *RedisSet
+
+	data, err := r.store.Get(k)
+	if err != nil {
+		return nil, errors.New("not found")
+	}
+
+	set, ok := data.(*RedisSet)
+	if !ok {
+		return nil, errors.New("Invalid type")
+	}
+
+	return set.Range(start, stop), nil
 }
 
 type RedisData interface {
@@ -105,13 +163,13 @@ type RedisData interface {
 
 type RedisString struct {
 	value string
-	mutex sync.Mutex
+	mutex *sync.RWMutex
 }
 
-func NewRedisString(value string) RedisData {
+func NewRedisString(value string) *RedisString {
 	return &RedisString{
 		value: value,
-		mutex: sync.Mutex{},
+		mutex: &sync.RWMutex{},
 	}
 }
 
@@ -131,8 +189,67 @@ func (s *RedisString) Incr() (int, error) {
 }
 
 type RedisSet struct {
+	store map[string]*Member
+	tree  *BinaryTree
+	mutex *sync.RWMutex
 }
 
-func NewRedisSet() RedisData {
-	return &RedisSet{}
+func NewRedisSet() *RedisSet {
+	return &RedisSet{
+		store: map[string]*Member{},
+		tree:  NewBinaryTree(),
+		mutex: &sync.RWMutex{},
+	}
+}
+
+func (s *RedisSet) Add(score int, member string) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	var m *Member
+	var ok bool
+
+	if m, ok = s.store[member]; ok {
+		// member in the set. update
+		s.tree.Del(m)
+	}
+
+	m = NewMember(score, member)
+	s.store[member] = m
+	s.tree.Add(m)
+
+	return nil
+}
+
+func (s *RedisSet) Card() int {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
+	return len(s.store)
+}
+
+func (s *RedisSet) Rank(member string) (int, error) {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
+	m, ok := s.store[member]
+	if !ok {
+		return -1, errors.New("not found")
+	}
+
+	return s.tree.Rank(m)
+}
+
+func (s *RedisSet) Range(start int, stop int) []string {
+	s.mutex.RLock()
+	list := s.tree.Range(start, stop)
+	s.mutex.RUnlock()
+
+	r := make([]string, 0, len(list))
+	for _, v := range list {
+		s, _ := v.(*Member)
+		r = append(r, s.Member)
+	}
+
+	return r
 }
