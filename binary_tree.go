@@ -1,12 +1,18 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
 
 type BinaryTree struct {
 	root *node
+}
+
+type BinaryTreeValue interface {
+	LessThan(BinaryTreeValue) bool
+	EqualTo(BinaryTreeValue) bool
 }
 
 func NewBinaryTree() *BinaryTree {
@@ -25,16 +31,39 @@ func (t *BinaryTree) Del(value int) error {
 	return nil
 }
 
-func (t *BinaryTree) InOrder(f func(value int)) {
-	inOrder(t.root, 0, func(a *node, d int) {
-		f(a.value)
-	})
+func (t *BinaryTree) Rank(value int) (int, error) {
+	return rank(t.root, value)
+}
+
+func (t *BinaryTree) Range(start int, stop int) []int {
+	if t.root == nil {
+		return []int{}
+	}
+
+	if start < 0 {
+		start += weight(t.root)
+	}
+
+	if stop < 0 {
+		stop += weight(t.root)
+	}
+
+	return card(t.root, weight(t.root.left), start, stop)
+}
+
+func (t *BinaryTree) Card(i int) (int, error) {
+	l := t.Range(i, i)
+
+	if len(l) == 0 {
+		return 0, errors.New("invalid index")
+	}
+
+	return l[0], nil
 }
 
 func (t *BinaryTree) Details() {
 	inOrder(t.root, 0, func(a *node, d int) {
 		padding := strings.Repeat("    ", d)
-		//fmt.Printf("%s{ v: %d, h: %d, w: %d}\n", padding, a.value, a.height, a.weight)
 		fmt.Printf("%s(%d)\n", padding, a.value)
 	})
 }
@@ -58,21 +87,21 @@ func newNode(value int) *node {
 	}
 }
 
-func insert(root *node, value int) *node {
-	if root == nil {
+func insert(a *node, value int) *node {
+	if a == nil {
 		return newNode(value)
 	}
 
-	if value < root.value {
-		root.left = insert(root.left, value)
+	if value < a.value {
+		a.left = insert(a.left, value)
 	} else {
-		root.right = insert(root.right, value)
+		a.right = insert(a.right, value)
 	}
 
-	root.height = max(height(root.left), height(root.right)) + 1
-	root.weight = weight(root.left) + weight(root.right) + 1
+	a.height = max(height(a.left), height(a.right)) + 1
+	a.weight = weight(a.left) + weight(a.right) + 1
 
-	return rebalance(root)
+	return rebalance(a)
 }
 
 func remove(a *node, value int) *node {
@@ -90,6 +119,9 @@ func remove(a *node, value int) *node {
 		}
 
 		// has 2 kids
+		smallest := first(a.right)
+		a.right = remove(a.right, smallest)
+		a.value = smallest
 	} else {
 		if value < a.value {
 			a.left = remove(a.left, value)
@@ -104,44 +136,52 @@ func remove(a *node, value int) *node {
 	return rebalance(a)
 }
 
+func first(a *node) int {
+	if a.left == nil {
+		return a.value
+	}
+
+	return first(a.left)
+}
+
 func balance(a *node) int {
 	return height(a.left) - height(a.right)
 }
 
-func rebalance(root *node) *node {
-	if balance(root) > 1 {
-		if balance(root.left) >= 0 {
-			return rotateRight(root)
+func rebalance(a *node) *node {
+	if balance(a) > 1 {
+		if balance(a.left) >= 0 {
+			return rotateRight(a)
 		} else {
-			return rotateLeftRight(root)
+			return rotateLeftRight(a)
 		}
 	}
 
-	if balance(root) < -1 {
-		if balance(root.right) <= 0 {
-			return rotateLeft(root)
+	if balance(a) < -1 {
+		if balance(a.right) <= 0 {
+			return rotateLeft(a)
 		} else {
-			return rotateRightLeft(root)
+			return rotateRightLeft(a)
 		}
 	}
 
-	return root
+	return a
 }
 
-func height(root *node) int {
-	if root == nil {
+func height(a *node) int {
+	if a == nil {
 		return -1
 	}
 
-	return root.height
+	return a.height
 }
 
-func weight(root *node) int {
-	if root == nil {
+func weight(a *node) int {
+	if a == nil {
 		return 0
 	}
 
-	return root.weight
+	return a.weight
 }
 
 func rotateLeft(a *node) *node {
@@ -186,6 +226,50 @@ func rotateRightLeft(a *node) *node {
 	a = rotateLeft(a)
 
 	return a
+}
+
+func card(a *node, i int, start int, stop int) []int {
+	if a == nil {
+		return []int{}
+	}
+
+	l := []int{}
+
+	if start < i && a.left != nil {
+		l = card(a.left, i-weight(a.left)+weight(a.left.left), start, stop)
+	}
+
+	if start <= i && i <= stop {
+		l = append(l, a.value)
+	}
+
+	if i < stop && a.right != nil {
+		l = append(l, card(a.right, i+weight(a.right.left)+1, start, stop)...)
+	}
+
+	return l
+}
+
+func rank(a *node, value int) (int, error) {
+	if a == nil {
+		return 0, errors.New("not found")
+	}
+
+	if value == a.value {
+		return weight(a.left), nil
+	}
+
+	if value < a.value {
+		return rank(a.left, value)
+	} else {
+		r, err := rank(a.right, value)
+
+		if err == nil {
+			r = r + weight(a.left) + 1
+		}
+
+		return r, err
+	}
 }
 
 func inOrder(a *node, d int, f func(*node, int)) {

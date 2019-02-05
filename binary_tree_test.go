@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 )
@@ -14,6 +15,9 @@ func TestBinaryTree(t *testing.T) {
 		}
 
 		tree.Details()
+
+		a, b := tree.Rank(11)
+		fmt.Println(a, b)
 
 		if tree == nil {
 			t.Errorf("tree should not be nil")
@@ -51,4 +55,60 @@ func TestBinaryTree(t *testing.T) {
 			t.Errorf("tree should not be nil")
 		}
 	})
+
+	t.Run("test plz rank", func(t *testing.T) {
+		tree := NewBinaryTree()
+
+		for x := 0; x < 21; x++ {
+			tree.Add(x)
+		}
+
+		tree.Details()
+
+		for x := 0; x < 21; x++ {
+			r, err := tree.Rank(x)
+			fmt.Printf("value: %d, rank: %d, error: %v\n", x, r, err)
+		}
+
+		if tree == nil {
+			t.Errorf("tree should not be nil")
+		}
+	})
+
+	t.Run("test plz range", func(t *testing.T) {
+		tree := NewBinaryTree()
+
+		for x := 0; x < 21; x++ {
+			tree.Add(x)
+		}
+
+		tree.Details()
+
+		r := tree.Range(4, 17)
+
+		fmt.Println(r)
+
+		if tree == nil {
+			t.Errorf("tree should not be nil")
+		}
+	})
+
+	t.Run("test plz card", func(t *testing.T) {
+		tree := NewBinaryTree()
+
+		for x := 0; x < 21; x++ {
+			tree.Add(x)
+		}
+
+		tree.Details()
+
+		r, err := tree.Card(8)
+
+		fmt.Println(r, err)
+
+		if tree == nil {
+			t.Errorf("tree should not be nil")
+		}
+	})
+
 }
