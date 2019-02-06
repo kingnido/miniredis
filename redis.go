@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// TODO composition?
 type Redis struct {
 	store *SafeMap
 }
@@ -17,7 +18,7 @@ func NewRedis() (*Redis, error) {
 }
 
 func (r *Redis) Set(key string, value string) error {
-	k := Key(key)
+	k := key
 	v := NewRedisString(value)
 
 	return r.store.Add(k, v)
@@ -28,7 +29,7 @@ func (r *Redis) SetExpire(key string, value string, expires int) error {
 		return errors.New("Expiration time should be greater than 1s")
 	}
 
-	k := Key(key)
+	k := key
 	v := NewRedisString(value)
 
 	go func(timeout <-chan time.Time) {
@@ -40,7 +41,7 @@ func (r *Redis) SetExpire(key string, value string, expires int) error {
 }
 
 func (r *Redis) Get(key string) (string, error) {
-	k := Key(key)
+	k := key
 
 	data, err := r.store.Get(k)
 	if err != nil {
@@ -56,7 +57,7 @@ func (r *Redis) Get(key string) (string, error) {
 }
 
 func (r *Redis) Del(key string) error {
-	k := Key(key)
+	k := key
 
 	return r.store.Del(k)
 }
@@ -66,7 +67,7 @@ func (r *Redis) DbSize() int {
 }
 
 func (r *Redis) Incr(key string) (int, error) {
-	k := Key(key)
+	k := key
 
 	data, err := r.store.Get(k)
 	if err != nil {
@@ -83,7 +84,7 @@ func (r *Redis) Incr(key string) (int, error) {
 }
 
 func (r *Redis) ZAdd(key string, score int, member string) (int, error) {
-	k := Key(key)
+	k := key
 
 	var set *RedisSet
 
@@ -107,7 +108,7 @@ func (r *Redis) ZAdd(key string, score int, member string) (int, error) {
 }
 
 func (r *Redis) ZCard(key string) (int, error) {
-	k := Key(key)
+	k := key
 	var set *RedisSet
 
 	data, err := r.store.Get(k)
@@ -124,7 +125,7 @@ func (r *Redis) ZCard(key string) (int, error) {
 }
 
 func (r *Redis) ZRank(key string, member string) (int, error) {
-	k := Key(key)
+	k := key
 	var set *RedisSet
 
 	data, err := r.store.Get(k)
@@ -141,7 +142,7 @@ func (r *Redis) ZRank(key string, member string) (int, error) {
 }
 
 func (r *Redis) ZRange(key string, start int, stop int) ([]string, error) {
-	k := Key(key)
+	k := key
 	var set *RedisSet
 
 	data, err := r.store.Get(k)

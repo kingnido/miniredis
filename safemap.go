@@ -5,22 +5,19 @@ import (
 	"sync"
 )
 
-type Key string
-type Value interface{}
-
 type SafeMap struct {
-	store map[Key]Value
 	mutex *sync.RWMutex
+	store map[string]interface{}
 }
 
 func NewSafeMap() (*SafeMap, error) {
 	return &SafeMap{
-		store: map[Key]Value{},
+		store: map[string]interface{}{},
 		mutex: &sync.RWMutex{},
 	}, nil
 }
 
-func (m *SafeMap) Add(key Key, value Value) error {
+func (m *SafeMap) Add(key string, value interface{}) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -29,7 +26,7 @@ func (m *SafeMap) Add(key Key, value Value) error {
 	return nil
 }
 
-func (m *SafeMap) Get(key Key) (Value, error) {
+func (m *SafeMap) Get(key string) (interface{}, error) {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
 
@@ -41,7 +38,7 @@ func (m *SafeMap) Get(key Key) (Value, error) {
 	return value, nil
 }
 
-func (m *SafeMap) Del(key Key) error {
+func (m *SafeMap) Del(key string) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -53,7 +50,7 @@ func (m *SafeMap) Del(key Key) error {
 	return errors.New("Not found")
 }
 
-func (m *SafeMap) DelIf(key Key, value Value) error {
+func (m *SafeMap) DelIf(key string, value interface{}) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 

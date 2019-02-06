@@ -7,7 +7,7 @@ import (
 func TestBasic(t *testing.T) {
 	t.Run("get non existing key", func(t *testing.T) {
 		m, _ := NewSafeMap()
-		key := Key("key")
+		key := "key"
 
 		_, err := m.Get(key)
 
@@ -18,7 +18,7 @@ func TestBasic(t *testing.T) {
 
 	t.Run("delete non existing key", func(t *testing.T) {
 		m, _ := NewSafeMap()
-		key := Key("key")
+		key := "key"
 
 		err := m.Del(key)
 
@@ -29,43 +29,43 @@ func TestBasic(t *testing.T) {
 
 	t.Run("add and get key", func(t *testing.T) {
 		m, _ := NewSafeMap()
-		key := Key("key")
-		wanted := Value("value")
+		key := "key"
+		wanted := "value"
 
 		m.Add(key, wanted)
 		got, _ := m.Get(key)
 
 		if wanted != got {
-			t.Errorf("wanted: %p, got: %p", wanted, got)
+			t.Errorf("wanted: %s, got: %s", wanted, got)
 		}
 	})
 
 	t.Run("overwrite existing key", func(t *testing.T) {
 		m, _ := NewSafeMap()
-		key := Key("key")
-		v := Value("old")
-		wanted := Value("new")
+		key := "key"
+		v := "old"
+		wanted := "new"
 
 		m.Add(key, v)
 		m.Add(key, wanted)
 		got, _ := m.Get(key)
 
 		if wanted != got {
-			t.Errorf("wanted: %p, got: %p", wanted, got)
+			t.Errorf("wanted: %s, got: %s", wanted, got)
 		}
 	})
 
 	t.Run("add and get many keys", func(t *testing.T) {
 		m, _ := NewSafeMap()
 		items := []struct {
-			key   Key
-			value Value
+			key   string
+			value interface{}
 		}{
-			{Key("ka"), Value("va")},
-			{Key("kb"), Value("vb")},
-			{Key("kc"), Value("vc")},
-			{Key("kd"), Value("vd")},
-			{Key("ke"), Value("ve")},
+			{"ka", "va"},
+			{"kb", "vb"},
+			{"kc", "vc"},
+			{"kd", "vd"},
+			{"ke", "ve"},
 		}
 
 		for _, item := range items {
@@ -83,8 +83,8 @@ func TestBasic(t *testing.T) {
 
 	t.Run("delete existing key", func(t *testing.T) {
 		m, _ := NewSafeMap()
-		key := Key("key")
-		wanted := Value("value")
+		key := "key"
+		wanted := "value"
 
 		m.Add(key, wanted)
 		err := m.Del(key)
@@ -96,9 +96,9 @@ func TestBasic(t *testing.T) {
 
 	t.Run("delete existing key if value is the same as stored", func(t *testing.T) {
 		m, _ := NewSafeMap()
-		key := Key("key")
-		v1 := Value("value")
-		v2 := Value("value")
+		key := "key"
+		v1 := "value"
+		v2 := "value"
 
 		m.Add(key, &v1)
 		m.Add(key, &v2)
@@ -111,9 +111,9 @@ func TestBasic(t *testing.T) {
 
 	t.Run("don't delete existing key if value is not the same as stored", func(t *testing.T) {
 		m, _ := NewSafeMap()
-		key := Key("key")
-		v1 := Value("value")
-		v2 := Value("value")
+		key := "key"
+		v1 := "value"
+		v2 := "value"
 
 		m.Add(key, &v1)
 		m.Add(key, &v2)
