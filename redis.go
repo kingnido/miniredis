@@ -2,8 +2,6 @@ package main
 
 import (
 	"errors"
-	"strconv"
-	"sync"
 	"time"
 )
 
@@ -157,100 +155,4 @@ func (r *Redis) ZRange(key string, start int, stop int) ([]string, error) {
 	}
 
 	return set.Range(start, stop), nil
-}
-
-type RedisData interface {
-}
-
-type RedisString struct {
-	value string
-	mutex *sync.RWMutex
-}
-
-func NewRedisString(value string) *RedisString {
-	return &RedisString{
-		value: value,
-		mutex: &sync.RWMutex{},
-	}
-}
-
-func (s *RedisString) Incr() (int, error) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	i, err := strconv.Atoi(s.value)
-	if err != nil {
-		return 0, err
-	}
-
-	i += 1
-	s.value = strconv.Itoa(i)
-
-	return i, nil
-}
-
-type RedisSet struct {
-	store map[string]*Member
-	tree  *BinaryTree
-	mutex *sync.RWMutex
-}
-
-func NewRedisSet() *RedisSet {
-	return &RedisSet{
-		store: map[string]*Member{},
-		tree:  NewBinaryTree(),
-		mutex: &sync.RWMutex{},
-	}
-}
-
-func (s *RedisSet) Add(score int, member string) error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	var m *Member
-	var ok bool
-
-	if m, ok = s.store[member]; ok {
-		// member in the set. update
-		s.tree.Del(m)
-	}
-
-	m = NewMember(score, member)
-	s.store[member] = m
-	s.tree.Add(m)
-
-	return nil
-}
-
-func (s *RedisSet) Card() int {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
-
-	return len(s.store)
-}
-
-func (s *RedisSet) Rank(member string) (int, error) {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
-
-	m, ok := s.store[member]
-	if !ok {
-		return -1, errors.New("not found")
-	}
-
-	return s.tree.Rank(m)
-}
-
-func (s *RedisSet) Range(start int, stop int) []string {
-	s.mutex.RLock()
-	list := s.tree.Range(start, stop)
-	s.mutex.RUnlock()
-
-	r := make([]string, 0, len(list))
-	for _, v := range list {
-		s, _ := v.(*Member)
-		r = append(r, s.Member)
-	}
-
-	return r
 }
