@@ -13,6 +13,38 @@ hyperloglogs, geospatial indexes with radius queries and streams.
 In this project suport for string and sorted sets with range queries were
 implemented.
 
+## Approach
+
+The aproach to avoid much contention and keep the structures consistent, was to
+split the mutexes in two domains: keys and values.
+
+The keys domain is the global map. It's responsible by mapping keys to
+reference to values.
+
+The values domain is responsible accessing and modifiying the inner structure
+of values.
+
+The main pattern for operation is:
+
+```
+key_map.lock()
+value = key_map[key] or key_map[key] = value
+key_map.unlock()
+
+value.lock()
+value.do_something()
+value.unlock()
+```
+
+This way it's possible to do long operations (like range in sets), without
+blocking operations in other keys.
+
+In this implementation, an operation on a value that is not being referenced
+anymore is possible. It happens when the operation might take too long, and
+some other operation that change references in the global map occur, like SET
+or DEL. Since in the begging of the request the value was available, this
+solution considers that the operation can proceed until the end successfully.
+
 ## Data Structures
 
 ### Global Map
@@ -111,3 +143,21 @@ delete key. returns error if key does not exist
 ##### `dbsize`
 
 returns the number of keys
+
+##### `help`
+
+returns all the commands usage.
+
+## Usage
+
+This application can be run as a CLI, or HTTP server, or both.
+
+`<application> [-cli] [-port=<port>]`
+
+If cli is present, it will run a prompt where it's possible to run the commands
+already mentioned.
+
+If port is present, it will listen HTTP requests on the specified port.
+Commands should be set in te body of a POST request. Only one command per request if accepted.
+
+To exit the application, press Ctrl-C.
