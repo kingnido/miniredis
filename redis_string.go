@@ -6,20 +6,26 @@ import (
 )
 
 type RedisString struct {
+	sync.RWMutex
 	value string
-	mutex *sync.RWMutex
 }
 
 func NewRedisString(value string) *RedisString {
 	return &RedisString{
 		value: value,
-		mutex: &sync.RWMutex{},
 	}
 }
 
+func (s *RedisString) Value() string {
+	s.RLock()
+	defer s.RUnlock()
+
+	return s.value
+}
+
 func (s *RedisString) Incr() (int, error) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	s.Lock()
+	defer s.Unlock()
 
 	i, err := strconv.Atoi(s.value)
 	if err != nil {

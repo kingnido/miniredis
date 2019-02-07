@@ -5,70 +5,86 @@ import (
 	"sync"
 )
 
+var (
+	KeyNotFoundError      = errors.New("key not found")
+	KeyValueNotFoundError = errors.New("key-value pairs not found")
+)
+
 type SafeMap struct {
-	mutex *sync.RWMutex
+	sync.RWMutex
 	store map[string]interface{}
 }
 
-func NewSafeMap() (*SafeMap, error) {
+func NewSafeMap() *SafeMap {
 	return &SafeMap{
 		store: map[string]interface{}{},
-		mutex: &sync.RWMutex{},
-	}, nil
+	}
 }
 
-func (m *SafeMap) Add(key string, value interface{}) error {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
+func (m *SafeMap) Set(key string, value interface{}) {
+	m.Lock()
+	defer m.Unlock()
 
 	m.store[key] = value
-
-	return nil
 }
 
 func (m *SafeMap) Get(key string) (interface{}, error) {
-	m.mutex.RLock()
-	defer m.mutex.RUnlock()
+	m.RLock()
+	defer m.RUnlock()
 
 	value, ok := m.store[key]
 	if !ok {
-		return nil, errors.New("Not found")
+		return nil, KeyNotFoundError
 	}
 
 	return value, nil
 }
 
+func (m *SafeMap) GetOrDefault(key string, value interface{}) interface{} {
+	m.Lock()
+	defer m.Unlock()
+
+	v, ok := m.store[key]
+	if ok {
+		return v
+	}
+	m.store[key] = value
+
+	return value
+}
+
 func (m *SafeMap) Del(key string) error {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
+	m.Lock()
+	defer m.Unlock()
 
 	if _, ok := m.store[key]; ok {
 		delete(m.store, key)
 		return nil
 	}
 
-	return errors.New("Not found")
+	return KeyNotFoundError
 }
 
 func (m *SafeMap) DelIf(key string, value interface{}) error {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
+	m.Lock()
+	defer m.Unlock()
 
 	if stored, ok := m.store[key]; ok {
-		// deletes only if stored value and param value are the same
 		if stored == value {
+			// deletes only if stored value and param value are the same
 			delete(m.store, key)
 			return nil
 		}
-		return errors.New("Not same value")
+
+		return KeyValueNotFoundError
 	}
 
-	return errors.New("Not found")
+	return KeyNotFoundError
 }
 
 func (m *SafeMap) Size() int {
-	m.mutex.RLock()
-	defer m.mutex.RUnlock()
+	m.RLock()
+	defer m.RUnlock()
 
 	return len(m.store)
 }

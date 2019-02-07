@@ -6,7 +6,7 @@ import (
 
 func TestRedis(t *testing.T) {
 	t.Run("get non existing key", func(t *testing.T) {
-		r, _ := NewRedis()
+		r := NewRedis()
 
 		if _, err := r.Get("key"); err == nil {
 			t.Errorf("should return error")
@@ -14,7 +14,7 @@ func TestRedis(t *testing.T) {
 	})
 
 	t.Run("delete non existing key", func(t *testing.T) {
-		r, _ := NewRedis()
+		r := NewRedis()
 
 		err := r.Del("key")
 		if err == nil {
@@ -23,16 +23,12 @@ func TestRedis(t *testing.T) {
 	})
 
 	t.Run("add and get key", func(t *testing.T) {
-		r, _ := NewRedis()
+		r := NewRedis()
 
 		key := "key"
 		wanted := "value"
 
-		err := r.Set(key, wanted)
-		if err != nil {
-			t.Errorf("could not set key and value: %v", err)
-			return
-		}
+		r.Set(key, wanted)
 
 		got, err := r.Get(key)
 		if err != nil {
@@ -47,23 +43,14 @@ func TestRedis(t *testing.T) {
 	})
 
 	t.Run("overwrite existing key", func(t *testing.T) {
-		r, _ := NewRedis()
+		r := NewRedis()
 
 		key := "key"
 		old := "old"
 		wanted := "value"
 
-		err := r.Set(key, old)
-		if err != nil {
-			t.Errorf("could not set key and value: %v", err)
-			return
-		}
-
-		err = r.Set(key, wanted)
-		if err != nil {
-			t.Errorf("could not set key and value: %v", err)
-			return
-		}
+		r.Set(key, old)
+		r.Set(key, wanted)
 
 		got, err := r.Get(key)
 		if err != nil {
@@ -78,7 +65,7 @@ func TestRedis(t *testing.T) {
 	})
 
 	t.Run("add and get many keys", func(t *testing.T) {
-		r, _ := NewRedis()
+		r := NewRedis()
 		items := []struct {
 			key   string
 			value string
@@ -104,18 +91,14 @@ func TestRedis(t *testing.T) {
 	})
 
 	t.Run("delete existing key", func(t *testing.T) {
-		r, _ := NewRedis()
+		r := NewRedis()
 
 		key := "key"
 		value := "value"
 
-		err := r.Set(key, value)
-		if err != nil {
-			t.Errorf("could not set key and value: %v", err)
-			return
-		}
+		r.Set(key, value)
 
-		err = r.Del(key)
+		err := r.Del(key)
 		if err != nil {
 			t.Errorf("should not return error: %v", err)
 			return
@@ -127,7 +110,7 @@ func TestRedis(t *testing.T) {
 	})
 
 	t.Run("increment non existing key", func(t *testing.T) {
-		r, _ := NewRedis()
+		r := NewRedis()
 
 		key := "key"
 
@@ -143,16 +126,12 @@ func TestRedis(t *testing.T) {
 	})
 
 	t.Run("increment valid existing key", func(t *testing.T) {
-		r, _ := NewRedis()
+		r := NewRedis()
 
 		key := "key"
 		value := "5"
 
-		err := r.Set(key, value)
-		if err != nil {
-			t.Errorf("could not set key and value: %v", err)
-			return
-		}
+		r.Set(key, value)
 
 		i, err := r.Incr(key)
 		if err != nil {
@@ -166,18 +145,14 @@ func TestRedis(t *testing.T) {
 	})
 
 	t.Run("increment invalid existing key", func(t *testing.T) {
-		r, _ := NewRedis()
+		r := NewRedis()
 
 		key := "key"
 		value := "asd"
 
-		err := r.Set(key, value)
-		if err != nil {
-			t.Errorf("could not set key and value: %v", err)
-			return
-		}
+		r.Set(key, value)
 
-		_, err = r.Incr(key)
+		_, err := r.Incr(key)
 		if err == nil {
 			t.Errorf("should return error")
 		}

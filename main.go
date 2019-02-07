@@ -1,27 +1,32 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
-	"os"
+	"flag"
+	"sync"
 )
 
 func main() {
-	scanner := bufio.NewScanner(os.Stdin)
-	redis, _ := NewRedis()
+	// initialize redis structures
+	redis := NewRedis()
 	redisCmd := NewRedisCmd(redis)
 
-	fmt.Print("redis > ")
-	for scanner.Scan() {
-		input := scanner.Text()
-		if input == "quit" {
-			return
-		}
+	// set terminal options
+	portPtr := flag.String("port", "", "run server on port")
+	cliPrt := flag.Bool("cli", false, "run cli")
+	flag.Parse()
 
-		s, e := redisCmd.Send(input)
-		fmt.Printf("string: '%s', error: '%v'\n", s, e)
+	wg := &sync.WaitGroup{}
 
-		fmt.Print("redis > ")
+	// run server?
+	port := ":" + *portPtr
+	if len(port) > 1 {
+		runServer(redisCmd, port, wg)
 	}
-	fmt.Println("exiting...")
+
+	// run cli?
+	if *cliPrt {
+		runCli(redisCmd, wg)
+	}
+
+	wg.Wait()
 }

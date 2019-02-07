@@ -6,7 +6,7 @@ import (
 
 func TestBasic(t *testing.T) {
 	t.Run("get non existing key", func(t *testing.T) {
-		m, _ := NewSafeMap()
+		m := NewSafeMap()
 		key := "key"
 
 		_, err := m.Get(key)
@@ -17,7 +17,7 @@ func TestBasic(t *testing.T) {
 	})
 
 	t.Run("delete non existing key", func(t *testing.T) {
-		m, _ := NewSafeMap()
+		m := NewSafeMap()
 		key := "key"
 
 		err := m.Del(key)
@@ -28,11 +28,11 @@ func TestBasic(t *testing.T) {
 	})
 
 	t.Run("add and get key", func(t *testing.T) {
-		m, _ := NewSafeMap()
+		m := NewSafeMap()
 		key := "key"
 		wanted := "value"
 
-		m.Add(key, wanted)
+		m.Set(key, wanted)
 		got, _ := m.Get(key)
 
 		if wanted != got {
@@ -41,13 +41,13 @@ func TestBasic(t *testing.T) {
 	})
 
 	t.Run("overwrite existing key", func(t *testing.T) {
-		m, _ := NewSafeMap()
+		m := NewSafeMap()
 		key := "key"
 		v := "old"
 		wanted := "new"
 
-		m.Add(key, v)
-		m.Add(key, wanted)
+		m.Set(key, v)
+		m.Set(key, wanted)
 		got, _ := m.Get(key)
 
 		if wanted != got {
@@ -56,7 +56,7 @@ func TestBasic(t *testing.T) {
 	})
 
 	t.Run("add and get many keys", func(t *testing.T) {
-		m, _ := NewSafeMap()
+		m := NewSafeMap()
 		items := []struct {
 			key   string
 			value interface{}
@@ -69,7 +69,7 @@ func TestBasic(t *testing.T) {
 		}
 
 		for _, item := range items {
-			m.Add(item.key, item.value)
+			m.Set(item.key, item.value)
 		}
 
 		for _, item := range items {
@@ -82,11 +82,11 @@ func TestBasic(t *testing.T) {
 	})
 
 	t.Run("delete existing key", func(t *testing.T) {
-		m, _ := NewSafeMap()
+		m := NewSafeMap()
 		key := "key"
 		wanted := "value"
 
-		m.Add(key, wanted)
+		m.Set(key, wanted)
 		err := m.Del(key)
 
 		if err != nil {
@@ -95,13 +95,13 @@ func TestBasic(t *testing.T) {
 	})
 
 	t.Run("delete existing key if value is the same as stored", func(t *testing.T) {
-		m, _ := NewSafeMap()
+		m := NewSafeMap()
 		key := "key"
 		v1 := "value"
 		v2 := "value"
 
-		m.Add(key, &v1)
-		m.Add(key, &v2)
+		m.Set(key, &v1)
+		m.Set(key, &v2)
 		err := m.DelIf(key, &v2)
 
 		if err != nil {
@@ -110,13 +110,13 @@ func TestBasic(t *testing.T) {
 	})
 
 	t.Run("don't delete existing key if value is not the same as stored", func(t *testing.T) {
-		m, _ := NewSafeMap()
+		m := NewSafeMap()
 		key := "key"
 		v1 := "value"
 		v2 := "value"
 
-		m.Add(key, &v1)
-		m.Add(key, &v2)
+		m.Set(key, &v1)
+		m.Set(key, &v2)
 		err := m.DelIf(key, &v1)
 
 		if err == nil {

@@ -5,23 +5,27 @@ import (
 	"sync"
 )
 
+var (
+	MemberNotFound = errors.New("member not found")
+)
+
 type RedisSet struct {
+	sync.RWMutex
+
 	store map[string]*Member
 	tree  *BinaryTree
-	mutex *sync.RWMutex
 }
 
 func NewRedisSet() *RedisSet {
 	return &RedisSet{
 		store: map[string]*Member{},
 		tree:  NewBinaryTree(),
-		mutex: &sync.RWMutex{},
 	}
 }
 
-func (s *RedisSet) Add(score int, member string) error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+func (s *RedisSet) Set(score int, member string) error {
+	s.Lock()
+	defer s.Unlock()
 
 	var m *Member
 	var ok bool
@@ -39,28 +43,28 @@ func (s *RedisSet) Add(score int, member string) error {
 }
 
 func (s *RedisSet) Card() int {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
+	s.RLock()
+	defer s.RUnlock()
 
 	return len(s.store)
 }
 
 func (s *RedisSet) Rank(member string) (int, error) {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
+	s.RLock()
+	defer s.RUnlock()
 
 	m, ok := s.store[member]
 	if !ok {
-		return -1, errors.New("not found")
+		return -1, MemberNotFound
 	}
 
 	return s.tree.Rank(m)
 }
 
 func (s *RedisSet) Range(start int, stop int) []string {
-	s.mutex.RLock()
+	s.RLock()
 	list := s.tree.Range(start, stop)
-	s.mutex.RUnlock()
+	s.RUnlock()
 
 	r := make([]string, 0, len(list))
 	for _, v := range list {
