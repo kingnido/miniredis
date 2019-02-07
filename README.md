@@ -55,41 +55,59 @@ not int or is less than 1
 
 ##### `incr <key:string>`
 
-increments value for key. returns the new value as int returns error if
+increments value for key. returns the new value as int. returns error if
 value is not convertable to int
 
+### Sorted Set
 
+A sorted set does not keep duplicated elements, and can order the elements
+based in a score (and comparing the values lexicografically in case of tie),
+enabling range queries, and checking a value's position in the set.
 
+It's implemented using an AVL (a self-balancing binary search tree), with order
+statistics, to enable ranking an element, and selecting the k-th smallest
+element in the set. Being n the number of elements int the set, this strategy
+allow log(n) complexity in search, insert operations and rank operations. The
+range operation has log(n)+m complexity, same as the original Redis, being m
+the number of elements in the range.
 
+It has a read-write mutex, allowing many readers at same time. On modifying
+operations, only one thread can access the structure, to ensure consistency.
 
+#### Commands
 
+##### `zadd <key:string> <score:int> <member:string>`
+
+adds a member with score to set for key create a set for key, if key does
+not exist if member is updated, it will be placed in the proper position
+according to the new score returns error if value for key is not a set
+
+##### `zcard <key:string>`
+
+returns the number of members for key. returns error if key does not exist
+or value is not a set
+
+##### `zrank <key:string> <member:string>`
+
+returns position of the member in the set for key. returns error if key does
+not exist or member does not exist or value is not a set
+
+##### `zrange <key:string> <int:start> <int:stop>`
+
+returns list of members in positions start to stop in the set for key
+invalid indexes in the start - stop range are ignored. returns error if key
+does not exist or value is not a set
+
+### Other Commands
+
+Some commands are independent of type.
+
+#### Commands
 
 ##### `del <key:string>`
 
-    delete key returns error if key does not exist
+delete key. returns error if key does not exist
 
-### `dbsize`
+##### `dbsize`
 
-    returns the number of keys
-
-### `zadd <key:string> <score:int> <member:string>`
-
-    adds a member with score to set for key create a set for key, if key does
-    not exist if member is updated, it will be placed in the proper position
-    according to the new score returns error if value for key is not a set
-
-### `zcard <key:string>`
-
-    returns the number of members for key returns error if key does not exist
-    or value is not a set
-
-### `zrank <key:string> <member:string>`
-
-    returns position of the member in the set for key returns error if key does
-    not exist or member does not exist or value is not a set
-
-### `zrange <key:string> <int:start> <int:stop>`
-
-    returns list of members in positions start to stop in the set for key
-    invalid indexes in the start - stop range are ignored returns error if key
-    does not exist or value is not a set`, nil
+returns the number of keys
