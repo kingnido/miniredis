@@ -158,6 +158,6 @@ If cli is present, it will run a prompt where it's possible to run the commands
 already mentioned.
 
 If port is present, it will listen HTTP requests on the specified port.
-Commands should be set in te body of a POST request. Only one command per request if accepted.
+Commands should be sent in the body of a POST request. Only one command per request is accepted.
 
 To exit the application, press Ctrl-C.
