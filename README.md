@@ -78,12 +78,12 @@ string
 
 ##### `set <key:string> <value:string>`
 
-set value for key
+set value for key, returns OK
 
 ##### `set <key:string> <value:string> ex <delta:int>`
 
 set value for key with expiration time in seconds. returns error if delta is
-not int or is less than 1
+not int or is less than 1, otherwise OK
 
 ##### `incr <key:string>`
 
@@ -110,9 +110,10 @@ operations, only one thread can access the structure, to ensure consistency.
 
 ##### `zadd <key:string> <score:int> <member:string>`
 
-adds a member with score to set for key create a set for key, if key does
-not exist if member is updated, it will be placed in the proper position
-according to the new score returns error if value for key is not a set
+adds a member with score to set for key create a set for key, if key does not
+exist if member is updated, it will be placed in the proper position according
+to the new score returns error if value for key is not a set. in success return
+OK.
 
 ##### `zcard <key:string>`
 
@@ -148,8 +149,9 @@ returns the number of keys
 
 returns all the commands usage.
 
-## Build
+## Build and Run
 
+### Build
 It's implemented and tested with Go 1.11. Having the Go environment properly set:
 
 ```
@@ -160,7 +162,10 @@ go build .
 
 It will build a binary.
 
-Functional tests were implemented for a large range of cases. More could be done. To run them:
+Functional tests were implemented for a large range of cases. The RedisCmd and
+the server's request handler were tested with many ZADD requests in parallel,
+to ensure consistency in the set structure. A reasonable coverage was
+implemented for other structures as well. More can be done.
 
 ```
 # on macos
@@ -169,7 +174,7 @@ go test .
 
 It wont show much if everything is ok. For a more detailed log, run with -v flag.
 
-## Usage
+### Run
 
 This application can be run as a CLI, or HTTP server, or both.
 
@@ -182,3 +187,26 @@ If port is present, it will listen HTTP requests on the specified port.
 Commands should be sent in the body of a POST request. Only one command per request is accepted.
 
 To exit the application, press Ctrl-C.
+
+### Docker
+
+It's possible run it with Docker too.
+
+```
+cd <project_directory>
+docker build -t miniredis .
+docker run -p <desired_port>:8000 miniredis
+```
+
+### Requests
+
+Requests can be done using the curl command:
+
+```
+curl -d "<cmd>" <server_url>
+```
+
+Successful requets will return 200. For for those that not return a bulk OK, the
+result is JSON marshalled. It can be a integer, a string, or a list of string.
+
+If some HTTP error is return, the body contains the error message.

@@ -11,7 +11,7 @@ echo "Zadd $n + 1 members"
     echo zcard asd
     echo zrank asd 1000
     echo zrank asd 83849
-) | time go run . | tail
+) | time go run . -cli | tail
 echo
 
 echo "Zadd $n + 1 members and range"
@@ -24,7 +24,7 @@ echo "Zadd $n + 1 members and range"
     echo zrank asd 1000
     echo zrank asd 83849
     echo zrange asd 500 1000
-) | time go run . | tail
+) | time go run . -cli | tail
 echo
 
 echo "incr $n + 1 time"
@@ -34,5 +34,5 @@ echo "incr $n + 1 time"
     done
 
     echo get asd
-) | time go run . | tail
+) | time go run . -cli | tail
 echo
