@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestBasic(t *testing.T) {
+func TestSafeMap(t *testing.T) {
 	t.Run("get non existing key", func(t *testing.T) {
 		m := NewSafeMap()
 		key := "key"

@@ -148,6 +148,27 @@ returns the number of keys
 
 returns all the commands usage.
 
+## Build
+
+It's implemented and tested with Go 1.11. Having the Go environment properly set:
+
+```
+# on macos
+cd <project_directory>
+go build .
+```
+
+It will build a binary.
+
+Functional tests were implemented for a large range of cases. More could be done. To run them:
+
+```
+# on macos
+go test .
+```
+
+It wont show much if everything is ok. For a more detailed log, run with -v flag.
+
 ## Usage
 
 This application can be run as a CLI, or HTTP server, or both.
